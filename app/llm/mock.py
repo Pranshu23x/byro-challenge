@@ -72,7 +72,7 @@ class MockLLM(BaseLLM):
         decision = "engage" if conf >= 0.5 else "skip"
         return {
             "decision": decision,
-            "reason": f"mock triage (confidence={conf})",
+            "reason": f"mock reply check (confidence={conf})",
             "confidence": conf,
         }
 

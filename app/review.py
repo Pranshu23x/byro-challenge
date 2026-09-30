@@ -101,7 +101,7 @@ def review_cli() -> None:
         tri = prop.get("triage") or {}
         print("\n" + "=" * 70)
         print(f"POST {prop['post_id']}  [{prop['status']}]  "
-              f"triage={tri.get('decision')} ({tri.get('backend')}): {tri.get('reason')}")
+              f"reply check: {tri.get('decision')} ({tri.get('backend')}): {tri.get('reason')}")
         if prop.get("judge"):
             print(f"  judge: {prop['judge']}")
         print(f"  {prop['post_text'][:400]}{'…' if len(prop['post_text']) > 400 else ''}")

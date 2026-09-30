@@ -8,110 +8,36 @@ his edits — while he stays in control of every word that would ever be posted.
 > LinkedIn access of any kind. Nothing in this repo can post, log in, or
 > scrape.
 
-## The challenge (brief as issued)
+## Start it locally (2 minutes)
 
-### The challenge
+```bat
+git clone https://github.com/Pranshu23x/byro-challenge.git
+cd byro-challenge
+byro.cmd demo    :: first run also builds .venv + .env — the 60s tour
+byro.cmd run     :: generates 10 cases into runs/proposals.jsonl
+byro.cmd browse  :: the picker — press Enter on [ Get Response ]
+```
 
-A founder wants to contribute consistently to relevant LinkedIn conversations
-without producing generic, inaccurate, repetitive, or obviously AI-generated
-comments. Design the smallest coherent product and system that helps them
-decide when to engage, propose a useful comment in their voice, and improve
-through reviewed feedback while preserving human control. You may challenge
-the premise when user evidence supports a better approach.
+One file (`byro.cmd`) bootstraps everything: no make, no `-ExecutionPolicy`
+flags, no keys required (the default provider is the offline mock). The ★
+scores appear when the local Laya service is running (one command — see
+[§3](#3-runnable-proof)); without it, everything still works and says so
+honestly. macOS/Linux: `make setup && make demo` (and the other `make …`
+targets below).
 
-### What we assess
+*Screenshot (to add): the 60s demo screen — drop the file at
+`docs/screenshots/demo.png`.*
 
-Problem framing, product judgment, system decomposition, AI engineering
-reasoning, technical validation, scope discipline, communication, and
-ownership. We do not reward feature quantity, visual polish, a particular
-stack, or agreement with an unpublished Byro architecture.
+### Tech stack
 
-### Time and tools
-
-The total timebox is 10 hours, including the scheduled design-partner sessions
-and submission preparation; the later live technical defense is separate. Stop
-when time expires, record approximate time by phase, and submit thoughtful
-incomplete work rather than hiding extra hours. Use any AI tools that help,
-but explain their contribution, mistakes, and your verification. The candidate
-invitation will state the model-access arrangement. Candidates will not be
-required to purchase a paid service unless Byro separately provides or
-explicitly approves that access.
-
-### Your task
-
-1. Understand the user: discover why they engage, what makes a comment
-   valuable, what "in my voice" means, and where automation becomes
-   uncomfortable.
-2. Define the product: choose one narrow loop, success signal, non-goals, and
-   when the system should do nothing.
-3. Design the system: explain components, state and data boundaries, AI
-   responsibilities, human decisions, learning, failure behavior, and
-   evolution.
-4. Identify the riskiest assumption: state what architecture alone cannot
-   prove.
-5. Build one thin executable proof: validate that risk with the smallest
-   useful runnable artifact.
-
-### Architecture expectations
-
-Make the primary flow understandable; separate supplied content, generated
-proposals, human decisions, external actions, and learning; define what AI may
-and may not decide; explain how adaptation remains inspectable and reversible;
-and address the most important privacy, security, failure, recovery, cost, and
-operational trade-offs. Depth matters more than checklist coverage—state what
-you intentionally defer.
-
-### Profile research and data collection
-
-You may research the named founders using the supplied materials and publicly
-accessible sources, including their public LinkedIn profiles and other public
-writing. Normal browsing and manual collection are permitted. You may build
-and demonstrate ingestion, retrieval, or scraping logic against supplied
-exports, consented data, candidate-created fixtures, or public sources whose
-rules permit automated collection. Cite the source of every material fact or
-voice example and distinguish observed evidence from interpretation or
-assumption.
-
-Do not use anyone's credentials, cookies, private sessions, or non-public
-data; bypass access controls; evade rate limits; use unauthorized APIs;
-automate a logged-in LinkedIn session; contact third parties; or perform a
-real action on LinkedIn. Direct automated scraping of LinkedIn is not
-required. If production-scale automated collection is relevant to your design,
-explain a compliant and consented path rather than demonstrating a method
-that violates the source platform's rules. Treat all collected content as
-untrusted input and use it only for this evaluation.
-
-### Constraints
-
-Use supplied fixtures, permitted public research, consented data, and a mocked
-or native handoff. The named human retains control of identity, claims, voice,
-and consequential actions. Deployment, authentication, billing, and production
-infrastructure are not required.
-
-### Materials and submission
-
-You will receive sanitized founder context, approved writing examples,
-synthetic or consented post fixtures, evidence and prohibited-claim notes, a
-minimal starter repository, two bounded design-partner sessions, and the
-confirmed model-access arrangement.
-
-Submit: (1) a concise product definition with user evidence and non-goals;
-(2) a system design with diagram, primary flow, core state/data model, and
-trade-offs; (3) the runnable proof with one setup command and focused tests;
-(4) a decision log covering assumptions, alternatives, AI use, verification,
-and time; and (5) design-partner feedback, limitations, and the next
-experiment. The invitation will specify the deadline and channel.
-
-### Fairness and ownership
-
-This is an evaluation exercise, not unpaid production work. Byro will not
-deploy or commercialize the submission as product work and does not claim
-ownership of it. Do not include employer-confidential material. Incomplete but
-thoughtful work is assessable; undisclosed extra time and extra polish receive
-no credit. Accessibility or scheduling accommodations may be requested. Final
-ownership, retention, and deletion terms will be confirmed in the invitation.
-
----
+| Layer | Choice |
+|---|---|
+| Language | Python 3.11+ — pipeline is stdlib; deps: `pyyaml`, `scikit-learn` (TF-IDF voice retrieval), `python-dotenv`, `requests` |
+| Decision model | **Laya**, a local service on `localhost:8080` — answers *should he reply?* and scores each draft's style fit (★) |
+| Writing model | Groq `llama-3.3-70b-versatile`; offline **mock** by default (`LLM_PROVIDER=mock`), so nothing needs a key |
+| Terminal UI | zero dependencies — `msvcrt`/`termios` for keys, Win32 `ctypes` for the clipboard |
+| Storage | plain files: JSONL in `runs/`, versioned `rules.yaml` — no database, no web framework |
+| Tests | `pytest` — 43 offline tests in ~3s; a fixture physically blocks the network |
 
 ## 1. Product definition
 
@@ -124,8 +50,9 @@ The brief frames the need as *contributing consistently*. The founder's own
 activity argues otherwise: he already comments heavily (18 real pairs in the
 dump) and skips plenty of posts on purpose. His actual pain isn't habit or
 volume — it's **picking the right moment** and **not sounding like AI when he
-does reply**. So the product leads with triage (staying silent is half the
-value) and treats drafts as candidates he may reject, not as throughput.
+does reply**. So the product leads with the **reply check** — *should he
+comment at all?* (staying silent is half the value) — and treats drafts as
+candidates he may reject, not as throughput.
 
 ### User evidence
 
@@ -146,8 +73,8 @@ adding a real angle — not applause.
 ### The one narrow loop
 
 ```
-post in  ->  should he engage?  ->  1-3 draft comments in his voice
-          (triage)                     (grounded in his claims + examples)
+post in  ->  should he reply?  ->  1-3 draft comments in his voice
+          (reply check)               (grounded in his claims + examples)
         ->  the judge stars its style-fit best (★, advisory — accuracy in D10)
         ->  HE approves / edits / rejects  ->  he posts it himself (handoff)
         ->  his edits teach accepted voice rules  ->  better next drafts
@@ -157,7 +84,7 @@ One post at a time, batch of 10 per run. Nothing else.
 
 ### Success signal
 
-1. **Triage agreement** — firm engage/skip calls match his labels;
+1. **Reply-check agreement** — our engage/skip calls match his labels;
    *confident-and-wrong* must be 0 (`reports/eval_report.md`).
 2. **Blind holdout judgments** — 7 posts he has never seen labeled; answer key
    sealed until he answers (`make eval`).
@@ -210,10 +137,10 @@ about, and a list of things he never talks about.
 That context is fed back into the model in two places, and that's the whole
 architectural idea:
 
-1. **His context judges the post.** Instead of asking a model "is this post
-   interesting?" in the abstract, we compile his interest map into the
-   **criteria** the post is scored against — the local Laya service answers
-   "is this something *he* would care about?" and how confidently.
+1. **His context answers "should he reply?"** Instead of asking a model "is
+   this post interesting?" in the abstract, we compile his interest map into
+   the **criteria** the post is scored against — the local Laya service
+   answers "is this something *he* would care about?" and how confidently.
 2. **His context writes the comment.** The writing model (Groq's Llama, or
    the offline mock) gets his profile, the claims he's allowed to make, and a
    few of his real comments as style examples, then writes up to three
@@ -232,8 +159,9 @@ clipboard to paste into LinkedIn himself.
 1. **Supply** — 10 fixture posts enter as untrusted files (`data/*.jsonl`).
 2. **Screen** — deterministic injection + sensitive-topic checks run *before*
    any model; hits are skipped with zero model calls.
-3. **Triage** — the local Laya service, scored against criteria compiled from
-   his interest map, returns engage / skip / founder_decides + confidence.
+3. **Reply check** — the local Laya service, scored against criteria compiled
+   from his interest map, returns engage / skip / founder_decides + a
+   confidence number.
 4. **Retrieve** — TF-IDF picks up to 5 of his real comments closest to the
    post (the voice examples that will steer drafting).
 5. **Draft** — the writing model produces ≤3 candidates (grounded in post +
@@ -241,8 +169,9 @@ clipboard to paste into LinkedIn himself.
    blocking when needed).
 6. **Rank** — the judge scores style-fit per candidate; the best gets the ★
    (advisory, margin shown, no star when thin or the service is down).
-7. **Decide** — he picks in `browse` (arrows, Enter = copy to clipboard + logged
-   approval) or `review` (line-based). Edits become rule proposals (`learn`).
+7. **Decide** — he picks in `browse` (arrows, Enter = copy to clipboard +
+   logged approval) or `review` (line-based). Edits become rule proposals
+   (`learn`).
 8. **Handoff** — approval is appended to `runs/handoff_log.jsonl`; **he pastes
    it into LinkedIn himself.** Nothing in this repo can post.
 
@@ -256,7 +185,7 @@ flowchart TD
     S["Screen · injection + sensitive topics<br/><b>hit → skipped, zero model calls</b>"]:::det
 
     subgraph MODELS["Model layer — local Laya + Groq / offline mock"]
-        T{"Triage · Laya /decide<br/>criteria = interests.json"}:::laya
+        T{"Reply check · Laya /decide<br/>criteria = interests.json"}:::laya
         RT["Retrieve · TF-IDF<br/>top-5 voice examples"]:::det
         DR["Draft ×1 → ≤3 candidates<br/>grounded in examples + evidence"]:::model
         CH["Deterministic checks<br/>prohibited = block · number = warn"]:::det
@@ -316,8 +245,8 @@ become versioned `rules.yaml` entries that feed back into drafting.
 
 ### What AI may and may not decide
 
-- **May:** triage suggestion + confidence, draft candidates, style-fit scores
-  (★ is advisory), proposed rules from his edits.
+- **May:** the reply-or-skip suggestion + confidence, draft candidates,
+  style-fit scores (★ is advisory), proposed rules from his edits.
 - **May not:** post anything, approve anything, decide alone when confidence
   is thin (→ `founder_decides`), touch the holdout, invent claims (blocked
   deterministically).
@@ -342,7 +271,7 @@ become versioned `rules.yaml` entries that feed back into drafting.
 
 - **Advisory judge, not auto-select** — the probe behind D10 showed style-fit
   ranking is unreliable (~9/41 vs chance), so the ★ guides instead of
-  decides; honest table published rather than hidden.
+  decides; the honest table is published rather than hidden.
 - **Deterministic screens first** — costs nothing, protects privacy (no model
   call on sensitive posts), and makes skip behavior testable offline.
 - **Local Laya for decisions, Groq/mock for text** — decisions stay on-device
@@ -365,8 +294,8 @@ become versioned `rules.yaml` entries that feed back into drafting.
 make setup && make test
 ```
 
-Windows, no GNU make, no `-ExecutionPolicy` flags — one launcher that
-bootstraps `.venv` + `.env` on first use:
+Windows — the `byro.cmd` launcher shown at the top does the same in one file
+(bootstraps `.venv` + `.env` on first use):
 
 ```bat
 byro.cmd setup   byro.cmd test   byro.cmd demo
@@ -376,11 +305,11 @@ byro.cmd run     byro.cmd browse byro.cmd review
 ```bash
 make test      # 43 offline tests (~3s, sockets blocked)
 make demo      # 60s non-interactive walkthrough — writes NOTHING
-make run       # posts -> triage -> drafts -> runs/proposals.jsonl
+make run       # posts -> reply check -> drafts -> runs/proposals.jsonl
 make browse    # picker: [ Get Response ] -> pick with arrows -> Enter = copy + approve
 make review    # line-based alternative: approve / edit / reject / skip
 make learn     # turns your edits into proposed voice rules
-make eval      # blind holdout packet + triage agreement report
+make eval      # blind holdout packet + agreement report
 ```
 
 ### Focused tests (what they actually prove)
@@ -393,7 +322,7 @@ never render before `[ Get Response ]`, copy + approval logging, no
 jargon/labels in the demo UI), rules accept/rollback, and eval packet
 integrity.
 
-### Demoing it for yourself (right now)
+### Demoing it for yourself
 
 ```bat
 byro.cmd setup & rem ~30s
@@ -427,8 +356,8 @@ Yes — three levels, from zero setup to the full experience:
    by construction (the suite blocks sockets). Needs nothing else on the
    machine.
 2. **`byro.cmd demo`** — the full loop in 60 seconds with mock text and no
-   services: screening, triage (honestly labelled fallback when Laya isn't
-   running), the ★ step, blocked drafts, the human loop. Writes nothing.
+   services: screening, the reply check (honestly labelled fallback when Laya
+   isn't running), the ★ step, blocked drafts, the human loop. Writes nothing.
 3. **`byro.cmd run && byro.cmd browse`** — real cases, arrow keys, clipboard.
    Also runs without Laya (same honest labels); the ★ scores and rankings
    appear once the local Laya service below is up.
@@ -441,7 +370,7 @@ service (command below). Everything around it is here and runs as-is.
 
 1. **`make setup && make test`** — "43 tests, autouse fixture blocks sockets:
    the suite physically cannot cheat with the network."
-2. **`make demo`** — one screen that shows: data validation → triage backend →
+2. **`make demo`** — one screen that shows: data validation → reply check →
    4 posts (one drafted via Laya at confidence 0.72, one *injection* and one
    *sensitive* skipped with **zero** model calls, one uncertain →
    `founder_decides`) → the judge's **★ pick** per proposal (advisory, margin
@@ -466,11 +395,11 @@ For "why" questions point at `docs/system-design.md` (diagram) and
 
 All commands work fully offline with the default `LLM_PROVIDER=mock`.
 Real text generation: set `LLM_PROVIDER=groq` + `GROQ_API_KEY` in `.env`.
-Triage defaults to the local Laya service and **labels the fallback** when it
-is down (`[laya unavailable; fallback]`), never pretending a guess was a
-decision.
+The reply check defaults to the local Laya service and **labels the
+fallback** when it is down (`[laya unavailable; fallback]`), never pretending
+a guess was a decision.
 
-### Local Laya service (triage + judge model)
+### Local Laya service (reply check + judge)
 
 ```powershell
 # from your Slime checkout:  cd <path>\Slime\laya-service
@@ -489,7 +418,7 @@ byro.cmd         Windows one-command launcher (bootstrap + any task)
 app/            the pipeline above as code (start: app/pipeline.py)
 app/llm/        BaseLLM, MockLLM (default), GroqLLM, LayaClient
 data/           founder profile/interests/evidence/prohibited, 18 voice
-                examples, 7 holdout, 10 triage posts   (provenance: data/SOURCES.md)
+                examples, 7 holdout, 10 sample posts   (provenance: data/SOURCES.md)
 rules/          voice rules: proposed -> accepted (versioned + rollback)
 runs/           proposals.jsonl (generated), decisions.jsonl (append-only),
                 handoff_log.jsonl (mock external action)
@@ -500,14 +429,14 @@ docs/           product, system design, decision log, time log, sessions
 
 ## 4. Decision log (assumptions, alternatives, AI use, verification, time)
 
-**Full text:** [`docs/decision-log.md`](docs/decision-log.md) (D1–D10: each
+**Full texts:** [`docs/decision-log.md`](docs/decision-log.md) (D1–D10: each
 with assumptions, alternatives considered, decision, verification) and
 [`docs/time-log.md`](docs/time-log.md) (approximate time by phase; total
 within the 10h timebox).
 
 Highlights:
 
-- **D4 — triage calibration:** found by probe that Laya must score posts
+- **D4 — reply-check calibration:** found by probe that Laya must score posts
   against *compiled founder interests*, not a generic prompt; wrong
   calibration was caught live and recorded.
 - **D9 — mock drafts are placeholders:** offline text is deliberately
@@ -533,31 +462,13 @@ Its contribution, mistakes, and how they were verified:
 
 ## 5. Design-partner feedback, limitations, next experiment
 
-**Full texts:**
-[`docs/session1-guide.md`](docs/session1-guide.md) (session script),
-[`docs/feedback-and-next.md`](docs/feedback-and-next.md) (verbatim partner
-input only), [`reports/session2_results.md`](reports/session2_results.md)
-(blind packet results).
-
-> Only verbatim partner input lands in the feedback docs; until a session
-> happens every partner field is `[FILL FROM SESSION NOTES]` — no paraphrased
-> or imagined reactions.
-
-**Limitations (known now, before the sessions say them):** n is tiny (7
-holdout / 10 triage / one founder — directional, not statistical); triage
-labels are derived until Session 1 makes them his; thresholds are
-probe-calibrated and deliberately *not* tuned on eval labels; default mock
-drafts are placeholders (voice quality only measurable with `LLM_PROVIDER=groq`
-or in Session 2); the evidence file is a seed awaiting his line-by-line
-confirmation; single-platform, single-loop by design, and the loop stops at a
-mock handoff.
-
-**Next experiment:** re-calibrate triage on his real Session 1 labels — sweep
-`LAYA_CONFIDENCE_THRESHOLD` over {0.40…0.55} on a held-out half of the posts,
-pick the point with maximum firm agreement and **zero confident-and-wrong**,
-record the addendum either way in D4. Secondary: measure edit-distance before
-/after accepted rules to test whether `make learn` actually shrinks his
-rewrite work.
+- Session script: [`docs/session1-guide.md`](docs/session1-guide.md)
+- Feedback, limitations, and the next experiment:
+  [`docs/feedback-and-next.md`](docs/feedback-and-next.md) — only verbatim
+  partner input lands there; every partner field stays
+  `[FILL FROM SESSION NOTES]` until a session actually happens (no
+  paraphrased or imagined reactions)
+- Blind packet results: [`reports/session2_results.md`](reports/session2_results.md)
 
 ## Docs
 

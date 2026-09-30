@@ -127,7 +127,7 @@ def cmd_eval(args) -> int:
     print(f"holdout: {result['holdout']}")
     t = result["triage"]
     agr = f"{t['agreement']:.0%}" if t["agreement"] is not None else "n/a"
-    print(f"triage: agreement={agr} on {t['labeled']} labeled "
+    print(f"reply check: agreement={agr} on {t['labeled']} labeled "
           f"of {t['total_posts']} (confident-and-wrong: {len(t['confident_and_wrong'])})")
     print(f"report -> {result['report']}")
     print("packet -> reports/review_packet.md (answer key: reports/answer_key.json)")
@@ -151,7 +151,7 @@ def cmd_demo(args) -> int:
     print(f"      fixtures OK ({len(warnings)} heuristic name warnings, "
           f"see data/SOURCES.md)\n")
 
-    print(f"[2/5] triage backend {W}")
+    print(f"[2/5] reply check {W}")
     backend = (args.triage or os.getenv("TRIAGE_BACKEND", "laya")).lower()
     if backend == "laya":
         if LayaClient().healthy():

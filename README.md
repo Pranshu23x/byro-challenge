@@ -12,7 +12,7 @@ his edits — while he stays in control of every word that would ever be posted.
 
 ```bash
 make setup     # creates .venv, installs deps, copies .env.example -> .env
-make test      # 16 offline tests (~3s, sockets blocked)
+make test      # 26 offline tests (~3s, sockets blocked)
 make demo      # 60s non-interactive walkthrough — writes NOTHING
 make run       # posts -> triage -> drafts -> runs/proposals.jsonl
 make review    # approve / edit / reject / skip each proposal (interactive)
@@ -30,7 +30,7 @@ powershell -ExecutionPolicy Bypass -File setup.ps1 setup|test|demo|run|review|le
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File setup.ps1 setup   # ~30s
-powershell -ExecutionPolicy Bypass -File setup.ps1 test    # 16 green in ~3s
+powershell -ExecutionPolicy Bypass -File setup.ps1 test    # 26 green in ~3s
 powershell -ExecutionPolicy Bypass -File setup.ps1 demo    # the whole loop, 60s
 ```
 
@@ -39,7 +39,7 @@ terminal (see below) — without it the demo still runs and says so honestly.
 
 ### 5-minute demo script (for someone else)
 
-1. **`make setup && make test`** — "16 tests, autouse fixture blocks sockets:
+1. **`make setup && make test`** — "26 tests, autouse fixture blocks sockets:
    the suite physically cannot cheat with the network."
 2. **`make demo`** — one screen that shows: data validation → triage backend →
    4 posts (one drafted via Laya at confidence 0.72, one *injection* and one
@@ -78,6 +78,64 @@ The founder's interest map (`data/founder/interests.json`) is compiled into the
 choice **criteria** Laya scores every post against (see
 `docs/decision-log.md` D4 for the calibration probe that found this).
 
+## Architecture
+
+```mermaid
+%%{init: {"theme":"base", "themeVariables": {"fontSize":"14px"}, "flowchart": {"curve": "linear", "nodeSpacing":25, "rankSpacing":35, "padding":6, "wrappingWidth": 240}}}%%
+flowchart TD
+    P["LinkedIn post · data/*.jsonl<br/><em>untrusted input</em>"]:::untrusted
+
+    S["Screen · injection + sensitive topics<br/><b>hit → skipped, zero model calls</b>"]:::det
+
+    subgraph MODELS["Model layer — local Laya + Groq / offline mock"]
+        T{"Triage · Laya /decide<br/>criteria = interests.json"}:::laya
+        RT["Retrieve · TF-IDF<br/>top-5 voice examples"]:::det
+        DR["Draft ×1 → ≤3 candidates<br/>grounded in examples + evidence"]:::model
+        CH["Deterministic checks<br/>prohibited = block · number = warn"]:::det
+        JD["★ Judge · advisory<br/>Laya score per draft · margin ≥ 0.05"]:::laya
+    end
+
+    subgraph HUMAN["Human decides — AI never posts"]
+        RV["Review CLI · drafted / founder_decides<br/>approve / edit / reject / skip"]:::human
+        HO["handoff_log.jsonl<br/>founder posts it himself"]:::human
+        LN["Learn<br/>edits → proposed rules"]:::human
+    end
+
+    SK["status: skipped<br/>no drafts"]:::det
+    ER["status: error<br/>no drafts"]:::det
+    BK["status: blocked<br/>cannot be approved"]:::det
+
+    P --> S
+    S -->|"clean"| T
+    S -->|"hit"| SK
+    T -->|"skip"| SK
+    T -->|"down → labelled Laya-unavailable fallback"| RT
+    T -->|"engage conf ≥ 0.50<br/>else founder_decides"| RT
+    RT --> DR
+    DR -->|"bad JSON"| ER
+    DR --> CH
+    CH -->|"all blocked"| BK
+    CH -->|"usable drafts"| JD
+    JD -->|"thin margin / Laya down → no star"| RV
+    JD -->|"★ pick first"| RV
+    RV -->|"approve"| HO
+    RV -->|"edit"| LN
+
+    classDef untrusted fill:#eeeeee,stroke:#757575,color:#212121
+    classDef det fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+    classDef laya fill:#ede7f6,stroke:#5e35b1,color:#311b92
+    classDef model fill:#fff3e0,stroke:#ef6c00,color:#e65100
+    classDef human fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+    style MODELS fill:#f5f5f5,stroke:#bdbdbd,color:#424242
+    style HUMAN fill:#f5f5f5,stroke:#bdbdbd,color:#424242
+```
+
+Grey = untrusted input · blue = deterministic (no model) · purple = local Laya ·
+orange = drafting model · green = the founder. His accepted edits become
+versioned `rules.yaml` entries that feed back into drafting. The full annotated
+flow (including eval) lives in
+[docs/system-design.md](docs/system-design.md).
+
 ## Safety rails (enforced by tests, not just promised)
 
 - **No LinkedIn anything** — no credentials, scraping, browser automation, or
@@ -97,8 +155,7 @@ choice **criteria** Laya scores every post against (see
 ## Repo map
 
 ```
-app/            pipeline: screen -> triage -> retrieve -> draft -> checks
-                -> review -> handoff -> learn          (start: app/pipeline.py)
+app/            the pipeline above as code (start: app/pipeline.py)
 app/llm/        BaseLLM, MockLLM (default), GroqLLM, LayaClient
 data/           founder profile/interests/evidence/prohibited, 18 voice
                 examples, 7 holdout, 10 triage posts   (provenance: data/SOURCES.md)
@@ -106,7 +163,7 @@ rules/          voice rules: proposed -> accepted (versioned + rollback)
 runs/           proposals.jsonl (generated), decisions.jsonl (append-only),
                 handoff_log.jsonl (mock external action)
 reports/        blind eval packet, answer key, eval report
-tests/          16 tests incl. holdout-leak guard and injection guard
+tests/          26 tests incl. holdout-leak guard, injection guard, judge contract
 docs/           product, system design, decision log, time log, sessions
 ```
 

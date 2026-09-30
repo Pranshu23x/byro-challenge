@@ -4,9 +4,11 @@ A small, honest agent loop that helps a founder (Rico Soots) decide **when** to
 comment on a LinkedIn post, propose a comment **in his voice**, and improve from
 his edits — while he stays in control of every word that would ever be posted.
 
-> Scope discipline: one narrow loop, one local model, no deployment, no
-> LinkedIn access of any kind. Nothing in this repo can post, log in, or
-> scrape.
+**Laya** — the local model this project uses for its decisions — is the
+alternative to **Jev**.
+
+> One small loop, one local model, nothing deployed. Nothing in this repo
+> can post to LinkedIn, log in, or scrape.
 
 ## Start it locally (2 minutes)
 
@@ -27,17 +29,6 @@ targets below).
 
 *Screenshot (to add): the 60s demo screen — drop the file at
 `docs/screenshots/demo.png`.*
-
-### Tech stack
-
-| Layer | Choice |
-|---|---|
-| Language | Python 3.11+ — pipeline is stdlib; deps: `pyyaml`, `scikit-learn` (TF-IDF voice retrieval), `python-dotenv`, `requests` |
-| Decision model | **Laya**, a local service on `localhost:8080` — answers *should he reply?* and scores each draft's style fit (★) |
-| Writing model | Groq `llama-3.3-70b-versatile`; offline **mock** by default (`LLM_PROVIDER=mock`), so nothing needs a key |
-| Terminal UI | zero dependencies — `msvcrt`/`termios` for keys, Win32 `ctypes` for the clipboard |
-| Storage | plain files: JSONL in `runs/`, versioned `rules.yaml` — no database, no web framework |
-| Tests | `pytest` — 43 offline tests in ~3s; a fixture physically blocks the network |
 
 ## 1. Product definition
 
@@ -159,6 +150,16 @@ gets the ★ and jumps to the top of the list. That pick is advisory
 step is always the human — arrow keys, Enter, and the comment lands in his
 clipboard to paste into LinkedIn himself.
 
+**Example post** — a feed post (from the founder or anyone) that Rico Soots
+wants to comment on; nothing is shown until he presses Get Response:
+
+![The post waiting behind Get Response](docs/screenshots/example-post.png)
+
+**Responses** — the LLM wrote the replies from Rico's previous comments;
+option 1 is Laya's top pick (★, 0.84), option 2 the next one:
+
+![Generated responses after Get Response](docs/screenshots/responses.png)
+
 #### What is Laya, and why is it here?
 
 - **What:** a small local model served on `localhost:8080` (separate Slime
@@ -172,24 +173,23 @@ clipboard to paste into LinkedIn himself.
 
 ### Primary flow
 
-1. **Supply** — 10 fixture posts enter as untrusted files (`data/*.jsonl`).
-2. **Screen** — deterministic injection + sensitive-topic checks run *before*
-   any model; hits are skipped with zero model calls.
-3. **Reply check** — the local Laya service, scored against criteria compiled
-   from his interest map, returns engage / skip / founder_decides + a
-   confidence number.
-4. **Retrieve** — TF-IDF picks up to 5 of his real comments closest to the
-   post (the voice examples that will steer drafting).
-5. **Draft** — the writing model produces ≤3 candidates (grounded in post +
-   evidence; forbidden claims and invented numbers checked deterministically —
-   blocking when needed).
-6. **Rank** — the judge scores style-fit per candidate; the best gets the ★
-   (advisory, margin shown, no star when thin or the service is down).
-7. **Decide** — he picks in `browse` (arrows, Enter = copy to clipboard +
-   logged approval) or `review` (line-based). Edits become rule proposals
-   (`learn`).
-8. **Handoff** — approval is appended to `runs/handoff_log.jsonl`; **he pastes
-   it into LinkedIn himself.** Nothing in this repo can post.
+1. **Posts** — 10 example posts from files (`data/*.jsonl`), treated as
+   untrusted input.
+2. **Screen** — simple text checks (attack patterns, sensitive topics) run
+   *before* any model; hits are skipped with zero model calls.
+3. **Reply check** — Laya scores the post against his interests and returns
+   engage / skip / founder_decides + a confidence number.
+4. **Retrieve** — pulls up to 5 of his past comments most similar to the
+   post (they steer the writing style).
+5. **Draft** — the writing model writes up to 3 candidates from the post,
+   his profile, and allowed claims; forbidden claims or made-up numbers are
+   blocked automatically.
+6. **Rank** — Laya scores how familiar each candidate sounds; the best gets
+   the ★ (advisory — no star when it's unsure or the service is down).
+7. **Decide** — he picks in `browse` (arrows, Enter = copy + approve) or
+   `review`; his edits become rule proposals (`learn`).
+8. **Handoff** — the approval is saved to `runs/handoff_log.jsonl`; **he
+   pastes it into LinkedIn himself.** Nothing in this repo can post.
 
 ### Architecture
 
@@ -285,22 +285,19 @@ become versioned `rules.yaml` entries that feed back into drafting.
 
 ### Trade-offs
 
-- **Advisory judge, not auto-select** — the probe behind D10 showed style-fit
-  ranking is unreliable (~9/41 vs chance), so the ★ guides instead of
-  decides; the honest table is published rather than hidden.
-- **Deterministic screens first** — costs nothing, protects privacy (no model
-  call on sensitive posts), and makes skip behavior testable offline.
-- **Local Laya for decisions, Groq/mock for text** — decisions stay on-device
-  and cheap; text quality is swappable (`LLM_PROVIDER=mock` default keeps the
-  whole suite offline and free).
-- **Files over a database** — append-only JSONL is inspectable, diffable, and
-  rollback-friendly at this scale; a DB would be operational overhead the
-  brief doesn't ask for.
+- **★ guides, never decides** — our probe scored the style-fit ranking at
+  ~9/41 (below chance), so the star is advice only; the honest table is
+  published in D10.
+- **Text checks before models** — free, private (no model sees sensitive
+  posts), testable offline.
+- **Laya locally for decisions, Groq for text** — decisions stay on your
+  machine; text is swappable (offline mock by default).
+- **Plain files over a database** — readable, diffable, one-command
+  rollback; a database is overhead we don't need.
 - **Mock handoff instead of posting** — safety constraint, not a shortcut.
-- **Intentionally deferred:** multi-platform, auth/billing/deployment,
-  production-scale LinkedIn collection (a compliant consented path is
-  described in `docs/system-design.md` instead of demonstrated), statistics
-  beyond one founder and n=7/10.
+- **Deliberately skipped:** multi-platform, auth/billing/deploy,
+  production-scale LinkedIn collection (a compliant path is described
+  instead), any statistics beyond one founder.
 
 ## 3. Runnable proof
 
@@ -330,13 +327,12 @@ make eval      # blind holdout packet + agreement report
 
 ### Focused tests (what they actually prove)
 
-`sockets blocked by an autouse fixture` — the suite physically cannot cheat
-with the network. 43 tests cover: injection/sensitive screens fire before any
-model, holdout leak = failure, blocked drafts cannot be approved, judge
-contract (best score wins, thin margin = no star), browse flow (responses
-never render before `[ Get Response ]`, copy + approval logging, no
-jargon/labels in the demo UI), rules accept/rollback, and eval packet
-integrity.
+43 offline tests in ~3 seconds; a fixture physically blocks the network, so
+the suite cannot cheat. They cover: junk/sensitive posts are dropped before
+any model, the holdout never leaks into prompts, blocked drafts can't be
+approved, the ★ ranking contract, the browse flow (no responses before
+`[ Get Response ]`, copy + approval logged), rules accept/rollback, and the
+eval packet.
 
 ### Demoing it for yourself
 
@@ -355,18 +351,7 @@ Each case shows **the post alone** with a `[ Get Response ]` button — Enter
 runs a short loading animation, then reveals the generated comments ranked by
 the judge (★ first). Arrow keys pick; **Enter copies the comment to your
 clipboard** (a clear ✓ confirmation block) and logs the approval; you paste it
-into LinkedIn yourself.
-
-**Example post** — a feed post (from the founder or anyone) that Rico Soots
-wants to comment on; nothing is shown until he presses Get Response:
-
-![The post waiting behind Get Response](docs/screenshots/example-post.png)
-
-**Responses** — the LLM generated the replies from Rico's previous comments;
-option 1 is Laya's scored suggestion (★, 0.84), option 2 the regular next
-option:
-
-![Generated responses after Get Response](docs/screenshots/responses.png)
+into LinkedIn yourself. (Screenshots at the top of §2.)
 
 *Screenshot (to add): the ✓ "Copied to clipboard" confirmation —
 `docs/screenshots/browse-copied.png`.*
@@ -505,3 +490,15 @@ Its contribution, mistakes, and how they were verified:
 - [docs/session1-guide.md](docs/session1-guide.md),
   [docs/feedback-and-next.md](docs/feedback-and-next.md) — design-partner
   sessions, limitations, next experiment
+
+## Tech stack
+
+| Piece | What's used |
+|---|---|
+| Language | Python 3.11+ (mostly standard library) |
+| Libraries | `pyyaml` (voice rules), `scikit-learn` (finds his similar past comments), `python-dotenv`, `requests` |
+| Decisions | **Laya** — local model on `localhost:8080` (reply check + ★ scoring); alternative to Jev |
+| Writing | Groq `llama-3.3-70b-versatile` — offline mock by default, no key needed |
+| UI | plain terminal app, zero dependencies (built-in `msvcrt`/`termios` keys, Windows clipboard via `ctypes`) |
+| Storage | JSONL files in `runs/` + versioned `rules.yaml` — no database |
+| Tests | `pytest` — 43 offline tests in ~3s, network blocked by a fixture |

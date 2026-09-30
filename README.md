@@ -128,6 +128,11 @@ state model, AI/human boundaries, trade-offs) — this section is the summary.
 
 ### The approach, in plain words
 
+To solve this problem we applied one simple approach: **pull the founder's
+previous comments → ask the LLM to generate a list of comments he might reply
+with → use Laya to score them and pick the one that sounds most like him.**
+Everything below is that one idea in detail.
+
 All of it starts with what the founder actually does. His real LinkedIn
 comments were pulled out **by hand** from the activity dump he gave us — no
 scraping, no login, nothing in this repo touches LinkedIn — and they become
@@ -153,6 +158,17 @@ gets the ★ and jumps to the top of the list. That pick is advisory
 (`decision-log.md` D10 publishes exactly how good it actually is); the last
 step is always the human — arrow keys, Enter, and the comment lands in his
 clipboard to paste into LinkedIn himself.
+
+#### What is Laya, and why is it here?
+
+- **What:** a small local model served on `localhost:8080` (separate Slime
+  checkout, one command — see §3).
+- **Use case:** two calls — the *reply check* (scores the post against his
+  interest map: should Rico reply at all?) and the *judge* (scores each
+  generated comment for style fit; the top score gets the ★).
+- **Why it's important:** decisions stay on-device, cheap, and grounded in
+  *his* evidence — and it's the signal that says which generated comment
+  sounds like Rico instead of like a generic LLM.
 
 ### Primary flow
 
@@ -336,17 +352,24 @@ terminal (see below) — without it the demo still runs and says so honestly.
 ### The browse picker (the demoable UI)
 
 Each case shows **the post alone** with a `[ Get Response ]` button — Enter
-runs a short loading animation, then reveals three comments ranked by the
-judge (★ first). Arrow keys pick; **Enter copies the comment to your
+runs a short loading animation, then reveals the generated comments ranked by
+the judge (★ first). Arrow keys pick; **Enter copies the comment to your
 clipboard** (a clear ✓ confirmation block) and logs the approval; you paste it
-into LinkedIn yourself. A footer says the posts are canned demo data; the
-frames carry no internal model/backend names.
+into LinkedIn yourself.
 
-*Screenshot (to add): the picker after responses load — drop the file at
-`docs/screenshots/browse-picker.png`.*
+**Example post** — a feed post (from the founder or anyone) that Rico Soots
+wants to comment on; nothing is shown until he presses Get Response:
 
-*Screenshot (to add): the ✓ "Copied to clipboard" confirmation — drop the
-file at `docs/screenshots/browse-copied.png`.*
+![The post waiting behind Get Response](docs/screenshots/example-post.png)
+
+**Responses** — the LLM generated the replies from Rico's previous comments;
+option 1 is Laya's scored suggestion (★, 0.84), option 2 the regular next
+option:
+
+![Generated responses after Get Response](docs/screenshots/responses.png)
+
+*Screenshot (to add): the ✓ "Copied to clipboard" confirmation —
+`docs/screenshots/browse-copied.png`.*
 
 ### Can I test this myself?
 

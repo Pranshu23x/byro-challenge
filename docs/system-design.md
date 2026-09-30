@@ -45,6 +45,7 @@ flowchart TD
 | Draft | `app/draft.py` | up to 3 candidates, strict JSON | Groq Llama or mock |
 | Checks | `app/checks.py` | block/warn flags on every draft | none (deterministic) |
 | Judge | `app/judge.py` | ★ style-fit recommendation + margin | Laya scores; he still decides (D10) |
+| Browse | `app/browse.py` | arrow-key picker: 3 ranked comments, Enter = copy to clipboard + approve | none (UI only) |
 | Review | `app/review.py` | approve/edit/reject/skip, append-only | none (recommended draft shown first) |
 | Handoff | `app/handoff.py` | mock external action log | none |
 | Learn | `app/learn.py` | proposed rules from edits, versioning | proposes; he accepts |

@@ -100,19 +100,38 @@ def apply_judge(prop: Proposal, examples, client: LayaClient | None = None) -> P
     except AssertionError:
         raise
     except Exception as e:
-        rec, note = None, f"judge failed ({e.__class__.__name__})"
+        rec, scores, note = None, {}, f"judge failed ({e.__class__.__name__})"
     prop.recommended = rec
+    prop.scores = scores
     prop.judge = note
     return prop
 
 
-def order_drafts(drafts: list, recommended: str | None) -> list:
-    """Recommended first for display; stable otherwise. Works on dicts and
-    Draft dataclasses."""
-    if not recommended:
-        return list(drafts)
+def _is_blocked(d) -> bool:
+    flags = d.get("flags") if isinstance(d, dict) else None
+    if flags is None:
+        flags = [f.__dict__ for f in getattr(d, "flags", [])]
+    return any((f.get("severity") if isinstance(f, dict)
+                else getattr(f, "severity", None)) == "block" for f in flags)
+
+
+def order_drafts(drafts: list, recommended: str | None = None,
+                 scores: dict | None = None) -> list:
+    """Display order for the 3 candidates: blocked last, recommended first,
+    then Laya style-fit score descending (stable for ties / missing scores).
+    Works on dicts and Draft dataclasses."""
+    scores = scores or {}
 
     def _id(d):
         return d.get("id") if isinstance(d, dict) else getattr(d, "id", None)
 
-    return sorted(drafts, key=lambda d: 0 if _id(d) == recommended else 1)
+    def _key(d):
+        did = _id(d)
+        sc = scores.get(did)
+        return (
+            1 if _is_blocked(d) else 0,
+            0 if (recommended and did == recommended) else 1,
+            -(sc if isinstance(sc, (int, float)) else float("-inf")),
+        )
+
+    return sorted(drafts, key=_key)

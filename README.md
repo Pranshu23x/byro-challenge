@@ -15,7 +15,8 @@ make setup     # creates .venv, installs deps, copies .env.example -> .env
 make test      # 26 offline tests (~3s, sockets blocked)
 make demo      # 60s non-interactive walkthrough — writes NOTHING
 make run       # posts -> triage -> drafts -> runs/proposals.jsonl
-make review    # approve / edit / reject / skip each proposal (interactive)
+make browse    # arrow-key picker: ↑↓ choose, Enter = copy comment + approve
+make review    # line-based alternative: approve / edit / reject / skip
 make learn     # turns your edits into proposed voice rules
 make eval      # blind holdout packet + triage agreement report
 ```
@@ -23,7 +24,7 @@ make eval      # blind holdout packet + triage agreement report
 Windows (this machine has no GNU `make`):
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File setup.ps1 setup|test|demo|run|review|learn|eval
+powershell -ExecutionPolicy Bypass -File setup.ps1 setup|test|demo|run|browse|review|learn|eval
 ```
 
 ### Demoing it for yourself (right now)
@@ -47,10 +48,12 @@ terminal (see below) — without it the demo still runs and says so honestly.
    `founder_decides`) → Laya's **★ pick** per proposal (advisory, margin
    shown) → a prohibited-claim draft **BLOCKED** → how the human
    loop works. It writes nothing.
-3. **`make run && make review`** — "your turn": the ★ draft is listed first
-   but approve/edit/reject is entirely yours; then show
-   `runs/handoff_log.jsonl` — the system can only *log*;
-   posting stays manual.
+3. **`make run && make browse`** — "your turn": 3 comments per case, ranked
+   by Laya's preference (★ first). Arrow keys pick, **Enter copies the
+   comment to your clipboard** and logs the approval; you paste it into
+   LinkedIn yourself. (`make review` is the line-based fallback.) Then show
+   `runs/handoff_log.jsonl` — the system can only *log*; posting stays
+   manual.
 4. **`make learn`** after an edit → `python -m app rules list` →
    `rules accept r1` → `rules rollback 1` — "model proposes, I accept,
    versioned, exact one-command rollback."

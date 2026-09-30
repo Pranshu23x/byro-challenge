@@ -106,7 +106,8 @@ def review_cli() -> None:
             print(f"  judge: {prop['judge']}")
         print(f"  {prop['post_text'][:400]}{'…' if len(prop['post_text']) > 400 else ''}")
         prop = dict(prop)
-        prop["drafts"] = order_drafts(prop["drafts"], prop.get("recommended"))
+        prop["drafts"] = order_drafts(prop["drafts"], prop.get("recommended"),
+                                      prop.get("scores"))
         for i, d in enumerate(prop["drafts"], 1):
             print(_fmt_draft(i, d, prop.get("recommended")))
         print("  actions: approve <n> | edit <n> | reject <n> [reason] | skip | quit")

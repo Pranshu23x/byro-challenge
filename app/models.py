@@ -83,6 +83,7 @@ class Proposal:
     reasons: list[str] = field(default_factory=list)
     recommended: Optional[str] = None  # draft id Laya starred (suggestion only)
     judge: str = ""  # how/why the star was (or wasn't) assigned
+    scores: dict = field(default_factory=dict)  # draft id -> Laya style-fit score
 
     def to_dict(self) -> dict:
         return asdict(self)

@@ -67,6 +67,11 @@ def cmd_review(args) -> int:
     return 0
 
 
+def cmd_browse(args) -> int:
+    from app.browse import browse_cli
+    return browse_cli()
+
+
 def cmd_learn(args) -> int:
     from app import learn
     edited = learn.edited_decisions(ROOT / "runs" / "decisions.jsonl")
@@ -183,7 +188,7 @@ def cmd_demo(args) -> int:
         for reason in prop.reasons[:1]:
             print(f"                   reason: {reason}")
         from app.judge import order_drafts
-        for d in order_drafts(prop.drafts, prop.recommended):
+        for d in order_drafts(prop.drafts, prop.recommended, prop.scores):
             flags = ", ".join(f"{f.severity}/{f.kind}" for f in d.flags) or "clean"
             star = " ★" if prop.recommended == d.id else ""
             print(f"                   draft[{d.angle}]{star}: {d.text!r}  ({flags})")
@@ -232,6 +237,8 @@ def main(argv=None) -> int:
     p_run.set_defaults(fn=cmd_run)
 
     sub.add_parser("review", help="founder decides: approve/edit/reject/skip").set_defaults(fn=cmd_review)
+
+    sub.add_parser("browse", help="arrow-key picker: enter = copy comment to clipboard + approve").set_defaults(fn=cmd_browse)
 
     sub.add_parser("learn", help="propose voice rules from your edits").set_defaults(fn=cmd_learn)
 

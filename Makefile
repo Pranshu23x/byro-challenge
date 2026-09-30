@@ -2,7 +2,7 @@ PY ?= python3
 VENV := .venv
 BIN := $(VENV)/bin
 
-.PHONY: setup test demo run review learn eval
+.PHONY: setup test demo run browse review learn eval
 
 setup:
 	$(PY) -m venv $(VENV)
@@ -17,6 +17,9 @@ demo:
 
 run:
 	$(BIN)/python -m app run
+
+browse:
+	$(BIN)/python -m app browse
 
 review:
 	$(BIN)/python -m app review

@@ -28,6 +28,10 @@ D7–D9 record what actually happened while building.
 - **Decision:** split by job — **Laya** (`localhost:8080`) for the
   engage/skip *choice*, **Groq** (`LLM_PROVIDER=groq`) for draft/learn text,
   **MockLLM** default so `make test`/`make run` are offline and deterministic.
+  Compliant with the brief's model-access rule: **nothing requires a paid
+  purchase** — the default path is offline mock + the provided local Laya
+  service; Groq is opt-in only if the invitation approves/provides that
+  access.
 - **Verification:** 16 tests with autouse offline env + socket blocking
   (`tests/conftest.py`); live Laya probes timed at ~2.5s/call; labeled
   fallback when Laya is unreachable.

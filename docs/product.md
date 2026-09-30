@@ -1,5 +1,33 @@
 # Product definition — adaptive LinkedIn commenting
 
+## Challenging the premise (with user evidence)
+
+The challenge frames the need as *contributing consistently*. The founder's
+own activity argues otherwise: he already comments heavily (18 real pairs in
+the dump) and skips plenty of posts on purpose ("f reddit ngl" was a reply to
+a growth-bait post). His actual pain isn't habit or volume — it's **picking
+the right moment** and **not sounding like AI when he does reply**. So the
+product leads with triage (when to stay silent is half the value) and treats
+drafts as candidates he may reject, not as throughput.
+
+## Riskiest assumption — what architecture alone cannot prove
+
+> **That a system-drafted comment will read as *him*.** Tests can prove the
+> screens fire, the holdout never leaks, rules version and roll back — none of
+> that proves Rico will accept a draft without rewriting it, or that he
+> can't tell it from his own comment. Voice acceptance is the whole bet; it
+> is only provable by him, blind.
+
+## The thin executable proof (task 5)
+
+`make eval` renders `reports/review_packet.md`: 7 holdout posts the system
+**never saw as examples**, each showing candidate drafts *plus one of his real
+comments* — so he must both pick what he'd send and identify which is his.
+The answer key (`answer_key.json`) stays sealed until he answers. If he sends
+a system draft as-is, or mistakes one for his own, the riskiest assumption
+survives its first test; if he doesn't, we learned it cheaply in minutes
+instead of after shipping. Full protocol: [`session2_results.md`](../reports/session2_results.md).
+
 ## The user and his evidence
 
 Rico Soots, 19, founder of Byro (AI head of content for B2B teams), Tallinn.

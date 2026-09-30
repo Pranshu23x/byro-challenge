@@ -111,7 +111,7 @@ docs/           product, system design, decision log, time log, sessions
 ## Docs
 
 - [docs/product.md](docs/product.md) — user evidence, the one loop, success
-  signal, non-goals
+  signal, non-goals, **challenged premise + riskiest assumption + thin proof**
 - [docs/system-design.md](docs/system-design.md) — diagram, state model,
   AI/human boundaries, trade-offs
 - [docs/decision-log.md](docs/decision-log.md) — assumptions, alternatives,

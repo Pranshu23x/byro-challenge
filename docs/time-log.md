@@ -18,6 +18,7 @@ time; this file is updated as phases close.
 | 7. Docs & submission prep | from 13:10 | in progress | README, product, system design, decision log, this file, session guides, feedback/next |
 | 7b. ★ recommendation (requested feature) | ~14:00–15:15 | 1:15 | Laya-judge probe: 8 framings, ≈9/41 vs 33% baseline → recorded as failure (D10); shipped anyway per founder's explicit instruction with advisory-only guardrails; `app/judge.py`, review ★ ordering, env switches; tests 16→26; live run: 10/10 proposals starred with margins; encodings fix (cp1252 ★ crash) |
 | 7c. browse arrow-key CLI | ~15:30–16:20 | 0:50 | zero-dep TUI (`msvcrt`/`termios`): 3 comments ranked by Laya score, Enter = Win32 clipboard copy + approve log; found + fixed 64-bit ctypes handle truncation in clipboard (live-tested); README quickstart/demo updated; tests 26→38 |
+| 7d. browse demo UX + byro.cmd | ~16:30–17:20 | 0:50 | two-phase picker (post → [ Get Response ] → loading ticks → ranked responses; never pre-shown), ✓ copied confirmation block, jargon-free frames + "canned data" footer; `byro.cmd` launcher (no `-ExecutionPolicy`, bootstraps venv/.env); tests 38→43 |
 | 8. Design-partner sessions | scheduled | unbilled vs build | Sessions 1–2 run *with the founder*; results land as `[FILL …]` placeholders until they happen (brief: sessions count in the 10h) |
 
 **Running total (phases 0–7b + docs so far): ≈ 3h00m of wall clock** — far

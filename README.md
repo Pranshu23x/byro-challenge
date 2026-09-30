@@ -15,24 +15,26 @@ make setup     # creates .venv, installs deps, copies .env.example -> .env
 make test      # 38 offline tests (~3s, sockets blocked)
 make demo      # 60s non-interactive walkthrough — writes NOTHING
 make run       # posts -> triage -> drafts -> runs/proposals.jsonl
-make browse    # arrow-key picker: ↑↓ choose, Enter = copy comment + approve
+make browse    # picker: [ Get Response ] -> pick with arrows -> Enter = copy + approve
 make review    # line-based alternative: approve / edit / reject / skip
 make learn     # turns your edits into proposed voice rules
 make eval      # blind holdout packet + triage agreement report
 ```
 
-Windows (this machine has no GNU `make`):
+Windows (this machine has no GNU `make`) — one double-clickable launcher,
+no `-ExecutionPolicy` flags, it bootstraps `.venv` + `.env` on first use:
 
-```powershell
-powershell -ExecutionPolicy Bypass -File setup.ps1 setup|test|demo|run|browse|review|learn|eval
+```bat
+byro.cmd setup   byro.cmd test   byro.cmd demo
+byro.cmd run     byro.cmd browse byro.cmd review
 ```
 
 ### Demoing it for yourself (right now)
 
-```powershell
-powershell -ExecutionPolicy Bypass -File setup.ps1 setup   # ~30s
-powershell -ExecutionPolicy Bypass -File setup.ps1 test    # 38 green in ~3s
-powershell -ExecutionPolicy Bypass -File setup.ps1 demo    # the whole loop, 60s
+```bat
+byro.cmd setup   & rem ~30s
+byro.cmd test    & rem 38 green in ~3s
+byro.cmd demo    & rem the whole loop, 60s
 ```
 
 For the full experience, also start the local Laya service in a second
@@ -48,12 +50,15 @@ terminal (see below) — without it the demo still runs and says so honestly.
    `founder_decides`) → Laya's **★ pick** per proposal (advisory, margin
    shown) → a prohibited-claim draft **BLOCKED** → how the human
    loop works. It writes nothing.
-3. **`make run && make browse`** — "your turn": 3 comments per case, ranked
-   by Laya's preference (★ first). Arrow keys pick, **Enter copies the
-   comment to your clipboard** and logs the approval; you paste it into
+3. **`make run && make browse`** — "your turn": each case shows the post
+   alone with a **[ Get Response ]** button; pressing Enter runs a short
+   loading animation, then reveals three comments ranked by the judge (★
+   first). Arrow keys pick, **Enter copies the comment to your clipboard**
+   (a clear ✓ confirmation block) and logs the approval; you paste it into
    LinkedIn yourself. (`make review` is the line-based fallback.) Then show
    `runs/handoff_log.jsonl` — the system can only *log*; posting stays
-   manual.
+   manual. A small footer in the picker says the posts are canned demo
+   data.
 4. **`make learn`** after an edit → `python -m app rules list` →
    `rules accept r1` → `rules rollback 1` — "model proposes, I accept,
    versioned, exact one-command rollback."
@@ -81,7 +86,8 @@ Yes — three levels, from zero setup to the full experience:
    running), the ★ step, blocked drafts, the human loop. Writes nothing.
 3. **`make run && make browse`** — real cases, arrow keys, clipboard. Also
    runs without Laya (same honest labels); the ★ scores and rankings appear
-   once the local Laya service below is up.
+   once the local Laya service below is up. On Windows: `byro.cmd run` then
+   `byro.cmd browse`.
 
 The one piece that doesn't live in this repo is Laya itself — it's a local
 service (command below). Everything around it is here and runs as-is.
@@ -203,6 +209,7 @@ flow (including eval) lives in
 ## Repo map
 
 ```
+byro.cmd         Windows one-command launcher (bootstrap + any task)
 app/            the pipeline above as code (start: app/pipeline.py)
 app/llm/        BaseLLM, MockLLM (default), GroqLLM, LayaClient
 data/           founder profile/interests/evidence/prohibited, 18 voice

@@ -1,0 +1,37 @@
+{
+  "h01": {
+    "A": "draft",
+    "B": "draft",
+    "C": "founder"
+  },
+  "h02": {
+    "A": "founder",
+    "B": "draft",
+    "C": "draft"
+  },
+  "h03": {
+    "A": "draft",
+    "B": "founder",
+    "C": "draft"
+  },
+  "h04": {
+    "A": "draft",
+    "B": "founder",
+    "C": "draft"
+  },
+  "h05": {
+    "A": "draft",
+    "B": "draft",
+    "C": "founder"
+  },
+  "h06": {
+    "A": "draft",
+    "B": "draft",
+    "C": "founder"
+  },
+  "h07": {
+    "A": "draft",
+    "B": "founder",
+    "C": "draft"
+  }
+}

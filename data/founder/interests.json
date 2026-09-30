@@ -1,0 +1,20 @@
+{
+  "source": "Derived from the founder's actual comment/react activity in the supplied LinkedIn export and activity dump (2026-09-30). Frequencies are counts of observed engagements, not survey answers. Confirm/refine in Session 1.",
+  "interests": [
+    {"topic": "estonian-startups", "weight": 0.9, "evidence": "commented on bilt.me €615K raise, byProduct launch; Tallinn-based"},
+    {"topic": "startup-funding", "weight": 1.0, "evidence": "commented on 6+ funding/exit posts (Zero $10.3M, Fathom exit, YC announcements, funding parodies)"},
+    {"topic": "building-in-public", "weight": 1.0, "evidence": "his own viral €20 funding post; replies to posts about his own post; reacts to founder-honesty posts"},
+    {"topic": "hackathons", "weight": 0.8, "evidence": "commented on 2 hackathon posts; runs mentor sessions himself"},
+    {"topic": "founder-life", "weight": 0.9, "evidence": "commented on 'crazy to build a startup', 'I can just do stuff' posts"},
+    {"topic": "ai-tools", "weight": 0.8, "evidence": "commented on Edge skills post; builds an AI product"},
+    {"topic": "content-marketing", "weight": 1.0, "evidence": "founder of a content tool; commented on 3 growth/content posts about consistency, hooks and personal branding"},
+    {"topic": "marketing", "weight": 0.7, "evidence": "commented on honesty-in-ads and merch posts"},
+    {"topic": "hiring", "weight": 0.9, "evidence": "hiring posts of his own; replies 'dm me' to applicants; commented on a founder-assistant post"},
+    {"topic": "community", "weight": 0.7, "evidence": "replies to peers, event posts, 'W' to people he rates"},
+    {"topic": "careers", "weight": 0.5, "evidence": "W'd a Jane Street/HRT internship post"},
+    {"topic": "eu-startups", "weight": 0.6, "evidence": "commented on Cherry Ventures run post"},
+    {"topic": "dev-culture", "weight": 0.5, "evidence": "commented on cubicle/agent-sessions post"}
+  ],
+  "low_signal_topics": ["politics", "personal-tragedy", "non-tech-lifestyle"],
+  "note": "fed into the Laya triage decision as part of the decision state; weights are relative engagement evidence, not probabilities."
+}

@@ -1,0 +1,121 @@
+{
+  "h01": {
+    "topic": "content-marketing",
+    "status": "founder_decides",
+    "drafts": [
+      {
+        "text": "how did consistently turn out for you in the end?",
+        "angle": "question",
+        "flags": []
+      },
+      {
+        "text": "experiences rarely gets enough credit, nice one",
+        "angle": "ack",
+        "flags": []
+      }
+    ],
+    "founder_real_comment": "i just use Byro"
+  },
+  "h02": {
+    "topic": "content-marketing",
+    "status": "founder_decides",
+    "drafts": [
+      {
+        "text": "how did understanding turn out for you in the end?",
+        "angle": "question",
+        "flags": []
+      },
+      {
+        "text": "impressions rarely gets enough credit, nice one",
+        "angle": "ack",
+        "flags": []
+      }
+    ],
+    "founder_real_comment": "chromeheartsmaxxing"
+  },
+  "h03": {
+    "topic": "content-marketing",
+    "status": "founder_decides",
+    "drafts": [
+      {
+        "text": "how did consistency turn out for you in the end?",
+        "angle": "question",
+        "flags": []
+      },
+      {
+        "text": "showcasing rarely gets enough credit, nice one",
+        "angle": "ack",
+        "flags": []
+      }
+    ],
+    "founder_real_comment": "f reddit ngl"
+  },
+  "h04": {
+    "topic": "startup-funding",
+    "status": "founder_decides",
+    "drafts": [
+      {
+        "text": "how did oversubscribed turn out for you in the end?",
+        "angle": "question",
+        "flags": []
+      },
+      {
+        "text": "approximately rarely gets enough credit, nice one",
+        "angle": "ack",
+        "flags": []
+      }
+    ],
+    "founder_real_comment": "congrats lads😂😂"
+  },
+  "h05": {
+    "topic": "eu-startups",
+    "status": "drafted",
+    "drafts": [
+      {
+        "text": "how did generational turn out for you in the end?",
+        "angle": "question",
+        "flags": []
+      },
+      {
+        "text": "combination rarely gets enough credit, nice one",
+        "angle": "ack",
+        "flags": []
+      }
+    ],
+    "founder_real_comment": "🇥🚀"
+  },
+  "h06": {
+    "topic": "community",
+    "status": "drafted",
+    "drafts": [
+      {
+        "text": "how did interesting turn out for you in the end?",
+        "angle": "question",
+        "flags": []
+      },
+      {
+        "text": "internship rarely gets enough credit, nice one",
+        "angle": "ack",
+        "flags": []
+      }
+    ],
+    "founder_real_comment": "he is pretty cool ngl"
+  },
+  "h07": {
+    "topic": "community",
+    "status": "founder_decides",
+    "drafts": [
+      {
+        "text": "how did overthinking turn out for you in the end?",
+        "angle": "question",
+        "flags": []
+      },
+      {
+        "text": "hesitating rarely gets enough credit, nice one",
+        "angle": "ack",
+        "flags": []
+      }
+    ],
+    "founder_real_comment": "aura"
+  }
+}

@@ -44,10 +44,12 @@ terminal (see below) — without it the demo still runs and says so honestly.
 2. **`make demo`** — one screen that shows: data validation → triage backend →
    4 posts (one drafted via Laya at confidence 0.72, one *injection* and one
    *sensitive* skipped with **zero** model calls, one uncertain →
-   `founder_decides`) → a prohibited-claim draft **BLOCKED** → how the human
+   `founder_decides`) → Laya's **★ pick** per proposal (advisory, margin
+   shown) → a prohibited-claim draft **BLOCKED** → how the human
    loop works. It writes nothing.
-3. **`make run && make review`** — "your turn": approve/edit/reject a
-   proposal; then show `runs/handoff_log.jsonl` — the system can only *log*;
+3. **`make run && make review`** — "your turn": the ★ draft is listed first
+   but approve/edit/reject is entirely yours; then show
+   `runs/handoff_log.jsonl` — the system can only *log*;
    posting stays manual.
 4. **`make learn`** after an edit → `python -m app rules list` →
    `rules accept r1` → `rules rollback 1` — "model proposes, I accept,

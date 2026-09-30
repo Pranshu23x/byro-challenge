@@ -54,6 +54,7 @@ valuable *to him*: short, specific, adding a real angle — not applause.
 ```
 post in  ->  should he engage?  ->  1-3 draft comments in his voice
           (triage)                     (grounded in his claims + examples)
+        ->  Laya stars its style-fit best (★, advisory — accuracy in D10)
         ->  HE approves / edits / rejects  ->  he posts it himself (handoff)
         ->  his edits teach accepted voice rules  ->  better next drafts
 ```

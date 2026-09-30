@@ -78,8 +78,9 @@ def edit(proposal: dict, draft: dict, new_text: str, reason: str = "",
 
 # ---------------------------------------------------------------- CLI ----
 
-def _fmt_draft(i: int, d: dict) -> str:
-    lines = [f"  [{i}] ({d.get('angle', '?')}) {d.get('text', '')!r}  id={d.get('id')}"]
+def _fmt_draft(i: int, d: dict, recommended: str | None = None) -> str:
+    star = " ★ LAYA'S PICK —" if d.get("id") == recommended else ""
+    lines = [f"  [{i}]{star} ({d.get('angle', '?')}) {d.get('text', '')!r}  id={d.get('id')}"]
     for fl in d.get("flags", []):
         lines.append(f"       FLAG [{fl['severity']}/{fl['kind']}] {fl['detail']}")
     if any(fl.get("severity") == "block" for fl in d.get("flags", [])):
@@ -88,6 +89,8 @@ def _fmt_draft(i: int, d: dict) -> str:
 
 
 def review_cli() -> None:
+    from app.judge import order_drafts
+
     proposals = [p for p in read_proposals()
                  if p.get("status") in ("drafted", "blocked", "founder_decides")]
     pending = [p for p in proposals if p.get("drafts")]
@@ -99,9 +102,13 @@ def review_cli() -> None:
         print("\n" + "=" * 70)
         print(f"POST {prop['post_id']}  [{prop['status']}]  "
               f"triage={tri.get('decision')} ({tri.get('backend')}): {tri.get('reason')}")
+        if prop.get("judge"):
+            print(f"  judge: {prop['judge']}")
         print(f"  {prop['post_text'][:400]}{'…' if len(prop['post_text']) > 400 else ''}")
+        prop = dict(prop)
+        prop["drafts"] = order_drafts(prop["drafts"], prop.get("recommended"))
         for i, d in enumerate(prop["drafts"], 1):
-            print(_fmt_draft(i, d))
+            print(_fmt_draft(i, d, prop.get("recommended")))
         print("  actions: approve <n> | edit <n> | reject <n> [reason] | skip | quit")
         while True:
             try:

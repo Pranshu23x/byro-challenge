@@ -126,3 +126,42 @@ D7–D9 record what actually happened while building.
   (salient keywords → varied angles). Still clearly a placeholder, but each
   proposal differs and the pipeline visibly carries post content through.
 - **Verification:** 16/16 tests; `make run` output shows per-post drafts.
+
+## D10 — ★ recommendation: Laya judge probe failed (≈22%), shipped anyway on explicit instruction
+
+- **Request:** the system should star its best draft — "Laya will select the
+  best but the human will decide the rest."
+- **First finding:** Laya exposes only `POST /decide` with question types
+  `choice | score | noul` — it **cannot generate text**. Drafts stay on
+  Groq/mock; Laya can only *rank*. Unknown: can it rank draft voice-fit →
+  8-round probe (`tools_probe_judge.py`, deleted after use):
+
+| # | Framing | Result |
+|---|---|---|
+| 1 | `choice`, neutral criteria | 2/8 |
+| 2 | `choice` + instructions in state | 1/4, 0/4, 2/4 |
+| 3 | `choice`, one draft per call | 2/4 |
+| 4 | `choice`, controlled style-only triples | 0/4 — prefers polite/generic |
+| 5 | sanity: his exact words vs corporate | **inverted** (0.14 vs 0.46) |
+| 6 | `score`, per-draft, full state | voice drafts ranked top |
+| 7 | `score`, multi-question, one call | 0/4 — options contaminate each other |
+| 8 | `score`, separate calls per draft | 1/4 (one absurd 0.03 score) |
+
+- **Finding:** ≈9/41 correct overall — *below* the 33% three-option baseline.
+  Laya is a relevance/decision model with a "polite full sentence" prior, not
+  a voice-fit judge (round 5 inverts on his verbatim words).
+- **Decision (founder's explicit instruction, against the evidence above):**
+  ship Laya as the judge anyway, with guardrails: the star is **advisory** —
+  never gates approval, never blocks; `LAYA_JUDGE=off` disables it; margins
+  below `LAYA_JUDGE_MIN_MARGIN` (0.05) print "too close to call" and show no
+  star; Laya-down → no star (never a random one); every proposal records the
+  margin in `judge`.
+- **Honesty:** the accuracy table above ships with the repo, and the CLI
+  prints the margin next to each star — the star must never be mistaken for
+  ground truth. Swapping in a text-model judge later is a contained change
+  (`app/judge.py` only).
+- **Verification:** 26/26 tests (`tests/test_judge.py`: highest score wins,
+  no star below margin, <2 clean drafts → skip, unavailable → no star, judge
+  never runs when `TRIAGE_BACKEND≠laya`, blocked proposals never judged);
+  live `python -m app run`: all 10 proposals carry `recommended` + margin;
+  review CLI shows ★ first; `make demo` shows it offline.

@@ -23,7 +23,11 @@ flowchart TD
     K --> W{all blocked?}
     W -->|yes| B[status: blocked]
     W -->|no| O[status: drafted / founder_decides]
-    O --> HV{Human review<br/>approve / edit / reject / skip}
+    O --> J{"★ Judge (Laya /decide score)<br/>style-fit per draft<br/>only when TRIAGE_BACKEND=laya"}
+    J -->|"margin >= 0.05"| ST["recommended = top draft<br/>advisory only (D10)"]
+    J -->|"down / thin margin / <2 clean"| NS["recommended = null"]
+    ST --> HV{Human review<br/>approve / edit / reject / skip}
+    NS --> HV
     HV -->|approve or edit| H["handoff_log.jsonl<br/>he posts it himself"]
     HV -->|edit| LN[learn: propose rules<br/>status: proposed]
     LN -->|he accepts| AR["rules.yaml status: accepted<br/>versioned snapshot"]
@@ -40,7 +44,8 @@ flowchart TD
 | Retrieve | `app/retrieve.py` | top-5 similar voice examples | none (TF-IDF) |
 | Draft | `app/draft.py` | up to 3 candidates, strict JSON | Groq Llama or mock |
 | Checks | `app/checks.py` | block/warn flags on every draft | none (deterministic) |
-| Review | `app/review.py` | approve/edit/reject/skip, append-only | none |
+| Judge | `app/judge.py` | ★ style-fit recommendation + margin | Laya scores; he still decides (D10) |
+| Review | `app/review.py` | approve/edit/reject/skip, append-only | none (recommended draft shown first) |
 | Handoff | `app/handoff.py` | mock external action log | none |
 | Learn | `app/learn.py` | proposed rules from edits, versioning | proposes; he accepts |
 | Eval | `app/eval.py` | blind packet + agreement report | none (he judges) |
@@ -53,7 +58,7 @@ flowchart TD
 | `data/holdout.jsonl` | same — **never enters any prompt** | input, sealed |
 | `data/triage_posts.jsonl` | `{id, post_text, founder_label, founder_reason}` | labels filled in Session 1 |
 | `data/founder/interests.json` | `{interests:[{topic, weight, evidence}], low_signal_topics}` | reweighted after sessions |
-| `runs/proposals.jsonl` | `{post_id, post_text, status, screen, triage:{decision,reason,confidence,backend}, drafts:[{id,text,angle,evidence_ids,flags}], reasons}` | regenerated per run |
+| `runs/proposals.jsonl` | `{post_id, post_text, status, screen, triage:{decision,reason,confidence,backend}, drafts:[{id,text,angle,evidence_ids,flags}], reasons, recommended, judge}` | regenerated per run |
 | `runs/decisions.jsonl` | `{ts, post_id, draft_id, action, original_text, final_text, reason}` | **append-only** |
 | `runs/handoff_log.jsonl` | approval row + `mocked: true` | append-only |
 | `rules/rules.yaml` | `{version, rules:[{id, statement, kind, status, params, source_decision_ids}]}` | statuses: proposed/accepted/rejected |
@@ -65,8 +70,9 @@ Statuses per post: `skipped | founder_decides | drafted | blocked | error`.
 
 | AI may | AI may NOT |
 |---|---|
-| score engage/skip with a confidence | approve its own draft, pick "the" draft |
-| propose ≤3 draft candidates | assert facts beyond post + `evidence.md` |
+| score engage/skip with a confidence | approve its own draft or post it |
+| propose ≤3 draft candidates | gate approval — the ★ is advisory, accuracy in D10 |
+| star one draft as its style-fit best (he decides) | assert facts beyond post + `evidence.md` |
 | propose ≤3 voice rules from *his* edits | activate a rule (only he sets `accepted`) |
 | | post, reply, schedule, or log into anything |
 | | mark its own eval ("looks good") — he judges blind |
@@ -84,8 +90,10 @@ Statuses per post: `skipped | founder_decides | drafted | blocked | error`.
 - **Bad rule shipped** → `rules rollback N` restores an exact snapshot
   (`tests/test_rules.py`).
 - **Cost/latency** → default run is fully offline (mock). Live: 1 Laya call
-  (~2.5s, local, free) + 1 draft call per engaging post on Groq (cents per
-  batch). Retrieval/checks are local CPU.
+  (~2.5s, local, free) per post for triage + 3 judge `score` calls per
+  proposal with drafts (~3s each; judge off when `LAYA_JUDGE=off` or backend
+  ≠ laya) + 1 draft call per engaging post on Groq (cents per batch).
+  Retrieval/checks are local CPU.
 - **Privacy** → only public posts he could see anyway; no credentials
   anywhere; `.env` ignored; tests block sockets to prove offline.
 

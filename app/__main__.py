@@ -182,9 +182,13 @@ def cmd_demo(args) -> int:
         print(line)
         for reason in prop.reasons[:1]:
             print(f"                   reason: {reason}")
-        for d in prop.drafts[:2]:
+        from app.judge import order_drafts
+        for d in order_drafts(prop.drafts, prop.recommended):
             flags = ", ".join(f"{f.severity}/{f.kind}" for f in d.flags) or "clean"
-            print(f"                   draft[{d.angle}]: {d.text!r}  ({flags})")
+            star = " ★" if prop.recommended == d.id else ""
+            print(f"                   draft[{d.angle}]{star}: {d.text!r}  ({flags})")
+        if prop.judge:
+            print(f"                   judge: {prop.judge}")
     print()
 
     print(f"[4/5] deterministic safety checks {W}")
@@ -213,6 +217,12 @@ def cmd_demo(args) -> int:
 
 
 def main(argv=None) -> int:
+    # Windows consoles default to cp1252 and crash on ★/— (U+2605/U+2014)
+    for _stream in (sys.stdout, sys.stderr):
+        try:
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, OSError):
+            pass
     parser = argparse.ArgumentParser(prog="app",
                                      description="Adaptive LinkedIn commenting (Byro challenge)")
     sub = parser.add_subparsers(dest="cmd", required=True)

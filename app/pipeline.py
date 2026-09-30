@@ -15,7 +15,7 @@ from app import learn
 
 
 def run_one(post: Post, llm: BaseLLM, backend: str | None = None,
-            rules_path: Path | None = None) -> Proposal:
+            rules_path: Path | None = None, judge_client=None) -> Proposal:
     scr = screen(post.text)
     try:
         tri: TriageResult = triage(post.text, scr, llm=llm, backend=backend)
@@ -71,5 +71,9 @@ def run_one(post: Post, llm: BaseLLM, backend: str | None = None,
         status = "founder_decides"
         reasons = ["triage uncertain — founder decides; drafts attached for convenience"]
 
-    return Proposal(post_id=post.id, post_text=post.text, status=status,
+    prop = Proposal(post_id=post.id, post_text=post.text, status=status,
                     screen=scr, triage=tri, drafts=drafts, reasons=reasons)
+    if status in ("drafted", "founder_decides"):
+        from app.judge import apply_judge
+        apply_judge(prop, examples, client=judge_client)
+    return prop
